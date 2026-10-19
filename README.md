@@ -3,7 +3,6 @@
 **Instituição:** Instituto Federal de Educação, Ciência e Tecnologia de São Paulo – IFSP Jacareí  
 **Curso:** Tecnologia em Análise e Desenvolvimento de Sistemas (TADS)  
 **Disciplina:** Banco de Dados 2  
-**Docente:** Profº Raul E. S. Castanhari  
 **Ano Letivo:** 2026  
 
 ---
