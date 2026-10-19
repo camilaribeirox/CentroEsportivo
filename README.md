@@ -8,13 +8,13 @@
 
 ---
 
-## 📌 Visão Geral
+## Visão Geral
 
 Este projeto é uma **aplicação interativa completa em Python para terminal** desenvolvida para gerenciar um Centro Esportivo. A aplicação implementa com total fidelidade o Modelo Entidade-Relacionamento (DER), o Diagrama de Classes e o Modelo Relacional especificados nos documentos e slides da disciplina.
 
 ---
 
-## 🏛 Arquitetura em 4 Camadas
+## Arquitetura em 4 Camadas
 
 A arquitetura do sistema segue rigorosamente o modelo documentado na apresentação (Slide 4 e `image.png`):
 
@@ -66,7 +66,7 @@ A arquitetura do sistema segue rigorosamente o modelo documentado na apresentaç
 
 ---
 
-## 🗄 Modelo Relacional e Restrições de Integridade
+## Modelo Relacional e Restrições de Integridade
 
 O banco possui 5 tabelas com suas respectivas restrições:
 
@@ -80,7 +80,7 @@ O banco possui 5 tabelas com suas respectivas restrições:
 
 ---
 
-## 🚀 Como Executar a Aplicação
+## Como Executar a Aplicação
 
 A aplicação utiliza apenas bibliotecas padrão do Python (como `sqlite3`), **não exigindo nenhuma dependência externa**.
 
@@ -94,7 +94,7 @@ Ao iniciar, se o banco `centro_esportivo.db` ainda não existir, ele será **aut
 
 ---
 
-## 📋 Funcionalidades do Sistema
+## Funcionalidades do Sistema
 
 No menu principal, você terá acesso a:
 
@@ -137,7 +137,7 @@ No menu principal, você terá acesso a:
 
 ---
 
-## 🖼 Diagramas
+## Diagramas
 
 | Diagrama | Arquivo |
 | :--- | :--- |
