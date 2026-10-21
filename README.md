@@ -149,7 +149,7 @@ No menu principal, você terá acesso a:
 
 ---
 
-## 📂 Arquivos no Projeto
+## Arquivos no Projeto
 
 - [`app.py`](app.py): aplicação principal em Python com as 4 camadas (seleção, inserção, atualização e remoção).
 - [`centro_esportivo.sql`](centro_esportivo.sql): script completo em MySQL 8 (criação das tabelas, INSERT, 4 seleções complexas, UPDATE e DELETE).
