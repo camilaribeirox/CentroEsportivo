@@ -1,170 +1,71 @@
-# Sistema de Gestão de Centro Esportivo
+# Sistema de Centro Esportivo
 
-**Instituição:** Instituto Federal de Educação, Ciência e Tecnologia de São Paulo – IFSP Jacareí  
-**Curso:** Tecnologia em Análise e Desenvolvimento de Sistemas (TADS)  
-**Disciplina:** Banco de Dados 2  
-**Ano Letivo:** 2026  
-
-## Integrantes
-
-- Camila Rocha Ribeiro ([@camilaribeirox](https://github.com/camilaribeirox))
-- Maria Clara Pastor Silva
+**Instituição:** IFSP – Câmpus Jacareí  
+**Curso:** Tecnologia em Análise e Desenvolvimento de Sistemas (ADS)  
+**Disciplina:** Banco de Dados 2 (2026)  
+**Docente:** Prof. Raul E. S. Castanhari  
+**Integrantes:** Camila R. Ribeiro, Helena Vieira e Maria Clara Pastor  
 
 ---
 
-## Visão Geral
+## 📌 Sobre o Projeto
 
-Este projeto é uma **aplicação interativa completa em Python para terminal** desenvolvida para gerenciar um Centro Esportivo. A aplicação implementa com total fidelidade o Modelo Entidade-Relacionamento (DER), o Diagrama de Classes e o Modelo Relacional especificados nos documentos e slides da disciplina.
+Implementação de um **Sistema de Centro Esportivo** com modelagem conceitual (DER), modelo lógico relacional, script completo em **MySQL 8** e uma aplicação interativa no terminal em **Python** estruturada em camadas com Mapeamento Objeto-Relacional (`AdaptadorMapaObjetoRelacional`).
+
+### Entidades e Relacionamentos
+- **`Modalidades`**: Esportes oferecidos e preço mensal (`CHECK (preco_mensal >= 0)`).
+- **`Instrutores`** (`1:N` com `Modalidades`): Cada instrutor leciona uma modalidade e possui CREF único (`ON DELETE RESTRICT`).
+- **`Alunos`**: Cadastro de alunos com CPF único e data de matrícula.
+- **`MatriculasModalidades`** (`N:N` associativa entre `Alunos` e `Modalidades`): Guarda a data de adesão (`data_adesao`) e impede matrícula duplicada do mesmo aluno na mesma modalidade (`UNIQUE (id_aluno, id_modalidade)` e `ON DELETE CASCADE`).
+- **`ExamesMedicos`** (`1:1` com `Alunos`): Um exame médico por aluno (`Apto` ou `Inapto`, `UNIQUE (id_aluno)` e `ON DELETE CASCADE`).
 
 ---
 
-## Arquitetura em 4 Camadas
+## 🏛 Arquitetura da Aplicação (`app.py`)
 
-A arquitetura do sistema segue rigorosamente o modelo documentado na apresentação (Slide 4 e `image.png`):
-
-```
-       ┌─────────────────────────────┐
-       │      InteracaoUsuario       │  <--- Camada de Apresentação (CLI no Terminal com tabelas e menus)
-       └──────────────┬──────────────┘
-                      │
-                      ▼
-       ┌─────────────────────────────┐
-       │         Controlador         │  <--- Camada de Negócio (Validações de CPF, CREF, datas e regras)
-       └──────┬──────────────────────┘
-              │  Manipula instâncias das Classes de Domínio:
-              │  (Modalidade, Instrutor, Aluno, MatriculaModalidade, ExameMedico)
-              ▼
-       ┌─────────────────────────────┐
-       │AdaptadorMapaObjetoRelacional│  <--- ORM / Persistência (Serialização, desserialização e SQL)
-       └──────────────┬──────────────┘
-                      │  Elimina a incompatibilidade de impedância
-                      ▼
-       ┌─────────────────────────────┐
-       │       SGBD Relacional       │  <--- SQLite integrado (centro_esportivo.db) e script MySQL 8
-       └─────────────────────────────┘
-```
+A aplicação segue a arquitetura em camadas apresentada nos diagramas do projeto para resolver a incompatibilidade de impedância entre objetos e tabelas:
 
 1. **Camada de Apresentação (`InteracaoUsuario`)**:
-   - Menus navegáveis no terminal.
-   - Tabelas alinhadas em formato ASCII/Unicode.
-   - Cores e destaques visuais via códigos ANSI.
-   - Validações interativas de entrada e tratamento amigável de erros.
-
-2. **Camada de Controle (`ControladorCentroEsportivo`)**:
-   - Aplica as regras de negócio antes de persistir dados.
-   - Valida unicidade de CPF e CREF.
-   - Assegura integridade nas relações (1:1 no laudo médico, N:N sem duplicidade de matrículas, 1:N com integridade de modalidade).
-   - Traduz violações de integridade relacional em mensagens claras para o usuário.
-
-3. **Camada de Domínio (Classes de Entidade)**:
-   - `Modalidade` (`id_modalidade`, `nome_modalidade`, `preco_mensal`)
-   - `Instrutor` (`id_instrutor`, `nome_instrutor`, `cref`, `id_modalidade`)
-   - `Aluno` (`id_aluno`, `nome_aluno`, `cpf`, `data_matricula`)
-   - `MatriculaModalidade` (`id_matricula_modalidade`, `data_adesao`, `id_modalidade`, `id_aluno`)
-   - `ExameMedico` (`id_exame`, `data_avaliacao`, `situacao`, `id_aluno`)
-
+   - Menus interativos no terminal feitos com a biblioteca `questionary`.
+   - Cinco menus (um para cada entidade) com operações completas de **CRUD** (Listar, Cadastrar, Atualizar e Excluir).
+2. **Camada de Controle (`Controlador`)**:
+   - Coordena as operações do sistema, instancia os objetos de domínio e delega a persistência ao adaptador.
+3. **Classes de Domínio**:
+   - `Modalidade` (`idModalidade`, `nome`, `precoMensal`)
+   - `Instrutor` (`idInstrutor`, `nome`, `cref`, `idModalidade`)
+   - `Aluno` (`idAluno`, `nome`, `cpf`, `dataMatricula`)
+   - `MatriculaModalidade` (`idMatriculaModalidade`, `dataAdesao`, `idModalidade`, `idAluno`)
+   - `ExameMedico` (`idExame`, `dataAvaliacao`, `situacao`, `idAluno`)
 4. **Camada de Persistência (`AdaptadorMapaObjetoRelacional`)**:
-   - Converte objetos Python em registros de tabelas relacionais e vice-versa (*Data Mapper / ORM*).
-   - Mantém as chaves estrangeiras ativas com `PRAGMA foreign_keys = ON`.
-   - Executa DDL, CRUDs, as 4 Seleções Complexas e testes acadêmicos.
+   - Único ponto do sistema que executa comandos SQL, convertendo objetos em registros e registros em objetos.
+   - Conecta ao **MySQL (`centro_esportivo`)** como banco principal (tentando em ordem: `PyMySQL`, `mysql-connector` e cliente de linha de comando `mysql`) e utiliza **SQLite (`centro_esportivo.db`)** como reserva automática.
+   - Cria o banco, as tabelas e os dados iniciais automaticamente caso ainda não existam.
 
 ---
 
-## Modelo Relacional e Restrições de Integridade
+## 🗄 Script do Banco de Dados (`centro_esportivo.sql`)
 
-O banco possui 5 tabelas com suas respectivas restrições:
-
-| Tabela | Chave Primária | Chaves Estrangeiras | Regras e Restrições |
-| :--- | :--- | :--- | :--- |
-| **Modalidades** | `id_modalidade` (PK Auto) | - | `CHECK (preco_mensal >= 0)` |
-| **Alunos** | `id_aluno` (PK Auto) | - | `UNIQUE (cpf)` de 11 dígitos |
-| **Instrutores** | `id_instrutor` (PK Auto) | `id_modalidade` $\rightarrow$ Modalidades | `UNIQUE (cref)`, `ON DELETE RESTRICT` (impede remoção de modalidade que possui instrutor) |
-| **ExamesMedicos** | `id_exame` (PK Auto) | `id_aluno` $\rightarrow$ Alunos | `UNIQUE (id_aluno)` (estritamente 1:1), `CHECK (situacao IN ('Apto', 'Inapto'))`, `ON DELETE CASCADE` |
-| **MatriculasModalidades** | `id_matricula_modalidade` (PK Auto) | `id_modalidade` e `id_aluno` | `UNIQUE (id_aluno, id_modalidade)` (impede matrícula duplicada no mesmo esporte), `ON DELETE CASCADE` |
-
----
-
-## Como Executar a Aplicação
-
-A aplicação utiliza apenas bibliotecas padrão do Python (como `sqlite3`), **não exigindo nenhuma dependência externa**.
-
-### No Terminal (PowerShell ou Prompt de Comando):
-
-```powershell
-cd "Sistema Centro Esportivo"
-python app.py
-```
-
-Ao iniciar, se o banco `centro_esportivo.db` ainda não existir, ele será **automaticamente criado e populado com os 27 registros oficiais dos slides**.
+O arquivo `centro_esportivo.sql` (MySQL 8) contempla:
+1. Criação do banco `centro_esportivo` (`utf8mb4`) e das 5 tabelas com chaves primárias (`AUTO_INCREMENT`), chaves estrangeiras e restrições de integridade (`UNIQUE`, `CHECK`, `RESTRICT` e `CASCADE`).
+2. Carga de dados de exemplo (`INSERT`) com 27 registros (5 modalidades, 5 alunos, 5 instrutores, 5 exames médicos e 7 matrículas).
+3. **4 Seleções Complexas (`SELECT`)**:
+   - **Consulta 1:** Ficha de alunos aptos (junção de 5 tabelas com filtros `WHERE`).
+   - **Consulta 2:** Auditoria médica preventiva de alunos inaptos matriculados (junção de 5 tabelas).
+   - **Consulta 3:** Receita mensal e total de alunos por modalidade (`LEFT JOIN`, `GROUP BY`, `COUNT`, `SUM` e `HAVING`).
+   - **Consulta 4:** Alunos matriculados em mais de uma modalidade (`INNER JOIN`, `GROUP BY`, `COUNT`, `GROUP_CONCAT`, `SUM` e `HAVING`).
+4. Comandos de atualização (`UPDATE`) e remoção (`DELETE`) com verificação de integridade referencial em cascata.
 
 ---
 
-## Funcionalidades do Sistema
+## 🚀 Como Executar
 
-No menu principal, você terá acesso a:
+1. Instale as dependências do Python:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-1. **Gestão de Modalidades Esportivas**:
-   - Listagem com preços em Reais (`R$`).
-   - Cadastro com validação de preço positivo.
-   - Edição de nome e valor.
-   - Exclusão com teste da proteção `ON DELETE RESTRICT`.
-2. **Gestão de Instrutores (1:N)**:
-   - Listagem com CREF e modalidade vinculada.
-   - Cadastro com validação de CREF único e modalidade existente.
-   - Atualização de nome, CREF e modalidade.
-   - Exclusão de instrutores.
-3. **Gestão de Alunos**:
-   - Listagem formatada com CPF mascarado (`000.000.000-00`).
-   - Cadastro com validação de 11 dígitos e unicidade.
-   - Atualização cadastral.
-   - Exclusão de aluno com verificação do **Efeito Cascata (`ON DELETE CASCADE`)** nas matrículas e laudo médico.
-4. **Gestão de Matrículas (N:N Associativa)**:
-   - Listagem de matrículas ativas com valor e data de adesão.
-   - Efetivação de nova matrícula com prevenção de duplicidade.
-   - Cancelamento de matrícula específica.
-5. **Gestão de Exames Médicos (1:1)**:
-   - Listagem com status destacados em cores (`Apto` em verde, `Inapto` em vermelho).
-   - Lançamento/atualização de laudo garantindo que cada aluno tenha no máximo 1 exame.
-   - Remoção de laudo.
-6. **Relatórios & Seleções Complexas (As 4 Consultas de BD2)**:
-   - **Consulta 1:** Ficha Geral de Alunos com Exame Apto (cruzamento de 5 tabelas).
-   - **Consulta 2:** Auditoria Médica Preventiva (Alunos Inaptos em Atividades Físicas).
-   - **Consulta 3:** Faturamento Estimado e Quantidade de Alunos por Modalidade (`LEFT JOIN`, `GROUP BY`, `HAVING`).
-   - **Consulta 4:** Alunos Multidisciplinares e Mensalidade Acumulada (`GROUP BY`, `HAVING > 1`, `GROUP_CONCAT`, `SUM`).
-7. **Laboratório de Testes dos Slides**:
-   - Execução automática dos 3 `UPDATE`s do Slide 15.
-   - Execução automática dos 2 `DELETE`s do Slide 16 com auditoria da exclusão em cascata.
-   - Opção para resetar e restaurar o banco ao estado inicial dos 27 registros.
-8. **Visualizador do Script SQL (`centro_esportivo.sql`)**:
-   - Exibe o script oficial formatado para MySQL 8 pronto para entrega.
-9. **Diagramas e Arquitetura**:
-   - Exibe no terminal o resumo explicativo das camadas e integridade relacional.
-
----
-
-## Diagramas
-
-| Diagrama | Arquivo |
-| :--- | :--- |
-| DER Conceitual | [`diagramas/der.png`](diagramas/der.png) |
-| Modelo Lógico Relacional | [`diagramas/modelo_relacional.png`](diagramas/modelo_relacional.png) |
-| Diagrama de Classes (Domínio) | [`diagramas/diagrama_classes_dominio.png`](diagramas/diagrama_classes_dominio.png) |
-| Diagrama de Classes (Arquitetura de Persistência) | [`diagramas/diagrama_classes_arquitetura.png`](diagramas/diagrama_classes_arquitetura.png) |
-
-![Diagrama de Classes](diagramas/diagrama_classes_dominio.png)
-
----
-
-## Arquivos no Projeto
-
-- [`Sistema Centro Esportivo/app.py`](Sistema%20Centro%20Esportivo/app.py): aplicação principal em Python com as 4 camadas (seleção, inserção, atualização e remoção).
-- [`Sistema Centro Esportivo/centro_esportivo.sql`](Sistema%20Centro%20Esportivo/centro_esportivo.sql): script completo em MySQL 8 (criação das tabelas, INSERT, 4 seleções complexas, UPDATE e DELETE).
-- [`diagramas/`](diagramas/): DER, modelo lógico, diagrama de classes e arquitetura de persistência.
-- [`Relatório - Sistema Centro Esportivo.pdf`](Relat%C3%B3rio%20-%20Sistema%20Centro%20Esportivo.pdf): relatório técnico do trabalho.
-- [`Slides Apresentação.pdf`](Slides%20Apresenta%C3%A7%C3%A3o.pdf): slides da apresentação.
-
-### Como rodar o script SQL no MySQL
-
-```bash
-mysql -u root -p < "Sistema Centro Esportivo/centro_esportivo.sql"
-```
+2. Execute a aplicação no terminal:
+   ```bash
+   python app.py
+   ```
+   *(No Windows, você também pode executar com `py app.py`)*.
