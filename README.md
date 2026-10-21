@@ -8,7 +8,7 @@
 
 ---
 
-## 📌 Sobre o Projeto
+## Sobre o Projeto
 
 Implementação de um **Sistema de Centro Esportivo** com modelagem conceitual (DER), modelo lógico relacional, script completo em **MySQL 8** e uma aplicação interativa no terminal em **Python**, estruturada em camadas com Mapeamento Objeto-Relacional (`AdaptadorMapaObjetoRelacional`).
 
@@ -36,7 +36,7 @@ Implementação de um **Sistema de Centro Esportivo** com modelagem conceitual (
 
 ---
 
-## 📐 Diagramas
+## Diagramas
 
 - [Diagrama Entidade-Relacionamento (DER)](diagramas/der.png)
 - [Modelo Lógico Relacional](diagramas/modelo_relacional.png)
@@ -45,7 +45,7 @@ Implementação de um **Sistema de Centro Esportivo** com modelagem conceitual (
 
 ---
 
-## 🏛 Arquitetura da Aplicação (`app.py`)
+## Arquitetura da Aplicação (`app.py`)
 
 A aplicação segue a arquitetura em camadas dos diagramas, para resolver a incompatibilidade de impedância entre objetos e tabelas:
 
@@ -67,7 +67,7 @@ A aplicação segue a arquitetura em camadas dos diagramas, para resolver a inco
 
 ---
 
-## 🔎 Seleções Complexas
+## Seleções Complexas
 
 As 4 consultas estão no script SQL e também no menu **"6 - Consultas"** da aplicação:
 
@@ -80,7 +80,7 @@ As 4 consultas estão no script SQL e também no menu **"6 - Consultas"** da apl
 
 ---
 
-## 🗄 Script do Banco de Dados (`centro_esportivo.sql`)
+## Script do Banco de Dados (`centro_esportivo.sql`)
 
 O script (MySQL 8) contém:
 1. Criação do banco `centro_esportivo` (`utf8mb4`) e das 5 tabelas, com chaves primárias (`AUTO_INCREMENT`), chaves estrangeiras e restrições (`UNIQUE`, `CHECK`, `RESTRICT` e `CASCADE`).
@@ -95,7 +95,7 @@ mysql -u root -p < "Sistema Centro Esportivo/centro_esportivo.sql"
 
 ---
 
-## 🚀 Como Executar a Aplicação
+## Como Executar a Aplicação
 
 Requisitos: Python 3. O MySQL é opcional (sem ele, a aplicação usa SQLite).
 
