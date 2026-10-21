@@ -2,6 +2,7 @@ import os
 import shutil
 import sqlite3
 import subprocess
+from datetime import date
 import questionary
 from questionary import Choice
 
@@ -31,18 +32,28 @@ class Instrutor:
         self.idModalidade = int(idModalidade)
 
 
+def validar_data(valor):
+    """Garante o formato AAAA-MM-DD (também no modo SQLite, que não valida datas)."""
+    texto = str(valor).strip()
+    try:
+        date.fromisoformat(texto)
+    except ValueError:
+        raise ValueError(f"Data inválida: '{texto}'. Use o formato AAAA-MM-DD.")
+    return texto
+
+
 class Aluno:
     def __init__(self, idAluno, nome, cpf, dataMatricula):
         self.idAluno = int(idAluno) if idAluno is not None else None
         self.nome = nome
         self.cpf = cpf
-        self.dataMatricula = str(dataMatricula)
+        self.dataMatricula = validar_data(dataMatricula)
 
 
 class MatriculaModalidade:
     def __init__(self, idMatriculaModalidade, dataAdesao, idModalidade, idAluno):
         self.idMatriculaModalidade = int(idMatriculaModalidade) if idMatriculaModalidade is not None else None
-        self.dataAdesao = str(dataAdesao)
+        self.dataAdesao = validar_data(dataAdesao)
         self.idModalidade = int(idModalidade)
         self.idAluno = int(idAluno)
 
@@ -50,7 +61,7 @@ class MatriculaModalidade:
 class ExameMedico:
     def __init__(self, idExame, dataAvaliacao, situacao, idAluno):
         self.idExame = int(idExame) if idExame is not None else None
-        self.dataAvaliacao = str(dataAvaliacao)
+        self.dataAvaliacao = validar_data(dataAvaliacao)
         self.situacao = situacao
         self.idAluno = int(idAluno)
 
@@ -244,30 +255,43 @@ class AdaptadorMapaObjetoRelacional:
             self._popular_dados_iniciais()
 
     def _popular_dados_iniciais(self):
-        for nome, preco in [("Musculação", 90.00), ("Crossfit", 150.00), ("Natação", 150.00)]:
+        for nome, preco in [
+            ("Musculação", 90.00), ("Crossfit", 150.00), ("Natação", 150.00),
+            ("Pilates", 130.00), ("Boxe", 110.00),
+        ]:
             self.salvar_modalidade(Modalidade(None, nome, preco))
         for nome, cpf, dt in [
             ("Helena Vieira", "99988877766", "2026-01-10"),
             ("Camila Ribeiro", "44433322211", "2026-02-15"),
             ("Jeremias Souza", "11122233344", "2026-03-30"),
+            ("Lucas Silva", "55566677788", "2026-04-10"),
+            ("Beatriz Lima", "22233344455", "2026-05-15"),
         ]:
             self.salvar_aluno(Aluno(None, nome, cpf, dt))
         for nome, cref, id_mod in [
             ("Professora Maria Clara Pastor", "CREF/SP 11111", 2),
             ("Professor Caio Polidoro", "CREF/SP 22222", 1),
             ("Professor Marcelo Costa", "CREF/SP 33333", 3),
+            ("Professora Fernanda Souza", "CREF/SP 44444", 4),
+            ("Professor Rodrigo Alves", "CREF/SP 55555", 5),
         ]:
             self.salvar_instrutor(Instrutor(None, nome, cref, id_mod))
         for dt, sit, id_al in [
             ("2026-01-09", "Apto", 1),
             ("2026-02-14", "Apto", 2),
             ("2026-04-14", "Inapto", 3),
+            ("2026-04-09", "Apto", 4),
+            ("2026-05-14", "Apto", 5),
         ]:
             self.salvar_exame(ExameMedico(None, dt, sit, id_al))
         for dt, id_mod, id_al in [
             ("2026-01-10", 1, 1),
-            ("2026-01-15", 2, 2),
+            ("2026-01-20", 2, 1),
+            ("2026-02-15", 2, 2),
             ("2026-05-15", 3, 3),
+            ("2026-04-10", 1, 4),
+            ("2026-04-12", 3, 4),
+            ("2026-05-15", 4, 5),
         ]:
             self.salvar_matricula(MatriculaModalidade(None, dt, id_mod, id_al))
 
@@ -591,7 +615,7 @@ class InteracaoUsuario:
             Choice(f"ID {m.idModalidade} - {m.nome} (R$ {m.precoMensal:.2f})", value=m)
             for m in modalidades
         ]
-        opcoes.append(Choice("Cancelar / Voltar", value=None))
+        opcoes.append(Choice("Cancelar / Voltar", value=False))
         return questionary.select(mensagem, choices=opcoes, qmark="").ask()
 
     def _escolher_aluno(self, mensagem="Selecione o aluno:"):
@@ -603,7 +627,7 @@ class InteracaoUsuario:
             Choice(f"ID {a.idAluno} - {a.nome} (CPF: {a.cpf})", value=a)
             for a in alunos
         ]
-        opcoes.append(Choice("Cancelar / Voltar", value=None))
+        opcoes.append(Choice("Cancelar / Voltar", value=False))
         return questionary.select(mensagem, choices=opcoes, qmark="").ask()
 
     def menu_modalidades(self):
@@ -691,7 +715,7 @@ class InteracaoUsuario:
                     Choice(f"ID {i.idInstrutor} - {i.nome} ({i.cref}) | Mod ID: {i.idModalidade}", value=i)
                     for i in instrutores
                 ]
-                opcoes.append(Choice("Cancelar / Voltar", value=None))
+                opcoes.append(Choice("Cancelar / Voltar", value=False))
                 inst = questionary.select("Selecione o instrutor para atualizar:", choices=opcoes, qmark="").ask()
                 if inst:
                     nome = questionary.text("Novo nome do instrutor:", default=inst.nome, qmark="").ask()
@@ -712,7 +736,7 @@ class InteracaoUsuario:
                     Choice(f"ID {i.idInstrutor} - {i.nome} ({i.cref})", value=i)
                     for i in instrutores
                 ]
-                opcoes.append(Choice("Cancelar / Voltar", value=None))
+                opcoes.append(Choice("Cancelar / Voltar", value=False))
                 inst = questionary.select("Selecione o instrutor para excluir:", choices=opcoes, qmark="").ask()
                 if inst:
                     if self.controlador.remover_instrutor(inst.idInstrutor):
@@ -815,7 +839,7 @@ class InteracaoUsuario:
                     )
                     for mm in matriculas
                 ]
-                opcoes.append(Choice("Cancelar / Voltar", value=None))
+                opcoes.append(Choice("Cancelar / Voltar", value=False))
                 mat = questionary.select("Selecione a matrícula para atualizar:", choices=opcoes, qmark="").ask()
                 if mat:
                     aluno = self._escolher_aluno("Selecione o novo aluno:")
@@ -841,7 +865,7 @@ class InteracaoUsuario:
                     )
                     for mm in matriculas
                 ]
-                opcoes.append(Choice("Cancelar / Voltar", value=None))
+                opcoes.append(Choice("Cancelar / Voltar", value=False))
                 mat = questionary.select("Selecione a matrícula para cancelar:", choices=opcoes, qmark="").ask()
                 if mat:
                     if self.controlador.remover_matricula(mat.idMatriculaModalidade):
@@ -898,7 +922,7 @@ class InteracaoUsuario:
                     )
                     for ex in exames
                 ]
-                opcoes.append(Choice("Cancelar / Voltar", value=None))
+                opcoes.append(Choice("Cancelar / Voltar", value=False))
                 ex = questionary.select("Selecione o exame médico para atualizar:", choices=opcoes, qmark="").ask()
                 if ex:
                     data_aval = questionary.text("Nova data da avaliação (AAAA-MM-DD):", default=ex.dataAvaliacao, qmark="").ask()
@@ -926,7 +950,7 @@ class InteracaoUsuario:
                     )
                     for ex in exames
                 ]
-                opcoes.append(Choice("Cancelar / Voltar", value=None))
+                opcoes.append(Choice("Cancelar / Voltar", value=False))
                 ex = questionary.select("Selecione o exame médico para excluir:", choices=opcoes, qmark="").ask()
                 if ex:
                     if self.controlador.remover_exame(ex.idExame):

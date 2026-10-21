@@ -7,6 +7,8 @@
 -- ---------------------------------------------------------------------
 -- 1. CRIAÇÃO DA BASE DE DADOS
 -- ---------------------------------------------------------------------
+SET NAMES utf8mb4;
+
 DROP DATABASE IF EXISTS centro_esportivo;
 CREATE DATABASE centro_esportivo
     CHARACTER SET utf8mb4
