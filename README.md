@@ -26,7 +26,7 @@ Implementação de um **Sistema de Centro Esportivo** com modelagem conceitual (
 ```
 ├── README.md
 ├── Relatório - Sistema Centro Esportivo.pdf   → relatório técnico
-├── Slides Apresentação.pdf                     → slides da apresentação
+├── Apresentação de slides.pdf                  → slides da apresentação
 ├── diagramas/                                  → DER, modelo relacional e diagramas de classes
 └── Sistema Centro Esportivo/
     ├── app.py                                  → aplicação em Python
