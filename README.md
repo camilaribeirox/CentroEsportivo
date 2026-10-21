@@ -5,6 +5,11 @@
 **Disciplina:** Banco de Dados 2  
 **Ano Letivo:** 2026  
 
+## Integrantes
+
+- Camila Rocha Ribeiro ([@camilaribeirox](https://github.com/camilaribeirox))
+- Maria Clara Pastor Silva
+
 ---
 
 ## Visão Geral
@@ -86,6 +91,7 @@ A aplicação utiliza apenas bibliotecas padrão do Python (como `sqlite3`), **n
 ### No Terminal (PowerShell ou Prompt de Comando):
 
 ```powershell
+cd "Sistema Centro Esportivo"
 python app.py
 ```
 
@@ -140,24 +146,25 @@ No menu principal, você terá acesso a:
 
 | Diagrama | Arquivo |
 | :--- | :--- |
-| DER Conceitual | [`diagramas/01_der_conceitual.png`](diagramas/01_der_conceitual.png) |
-| Modelo Lógico Relacional | [`diagramas/02_modelo_logico_relacional.png`](diagramas/02_modelo_logico_relacional.png) |
-| Diagrama de Classes | [`diagramas/03_diagrama_de_classes.png`](diagramas/03_diagrama_de_classes.png) |
-| Arquitetura de Persistência | [`diagramas/04_arquitetura_persistencia.png`](diagramas/04_arquitetura_persistencia.png) |
+| DER Conceitual | [`diagramas/der.png`](diagramas/der.png) |
+| Modelo Lógico Relacional | [`diagramas/modelo_relacional.png`](diagramas/modelo_relacional.png) |
+| Diagrama de Classes (Domínio) | [`diagramas/diagrama_classes_dominio.png`](diagramas/diagrama_classes_dominio.png) |
+| Diagrama de Classes (Arquitetura de Persistência) | [`diagramas/diagrama_classes_arquitetura.png`](diagramas/diagrama_classes_arquitetura.png) |
 
-![Diagrama de Classes](diagramas/03_diagrama_de_classes.png)
+![Diagrama de Classes](diagramas/diagrama_classes_dominio.png)
 
 ---
 
 ## Arquivos no Projeto
 
-- [`app.py`](app.py): aplicação principal em Python com as 4 camadas (seleção, inserção, atualização e remoção).
-- [`centro_esportivo.sql`](centro_esportivo.sql): script completo em MySQL 8 (criação das tabelas, INSERT, 4 seleções complexas, UPDATE e DELETE).
+- [`Sistema Centro Esportivo/app.py`](Sistema%20Centro%20Esportivo/app.py): aplicação principal em Python com as 4 camadas (seleção, inserção, atualização e remoção).
+- [`Sistema Centro Esportivo/centro_esportivo.sql`](Sistema%20Centro%20Esportivo/centro_esportivo.sql): script completo em MySQL 8 (criação das tabelas, INSERT, 4 seleções complexas, UPDATE e DELETE).
 - [`diagramas/`](diagramas/): DER, modelo lógico, diagrama de classes e arquitetura de persistência.
-- `Relatório Trabalho - Sistema Centro Esportivo.pdf`: relatório técnico do trabalho.
+- [`Relatório - Sistema Centro Esportivo.pdf`](Relat%C3%B3rio%20-%20Sistema%20Centro%20Esportivo.pdf): relatório técnico do trabalho.
+- [`Slides Apresentação.pdf`](Slides%20Apresenta%C3%A7%C3%A3o.pdf): slides da apresentação.
 
 ### Como rodar o script SQL no MySQL
 
 ```bash
-mysql -u root -p < centro_esportivo.sql
+mysql -u root -p < "Sistema Centro Esportivo/centro_esportivo.sql"
 ```
