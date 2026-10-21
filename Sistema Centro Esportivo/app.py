@@ -497,6 +497,98 @@ class AdaptadorMapaObjetoRelacional:
             (id_exame,),
         ) > 0
 
+    # ------------------------------------------------------------------
+    # SELEÇÕES COMPLEXAS (junção de tabelas + filtros de condição)
+    # Retornam listas de dicionários, pois cruzam várias entidades.
+    # ------------------------------------------------------------------
+    def _group_concat(self, coluna):
+        # MySQL usa SEPARATOR; o SQLite usa o segundo argumento
+        if self.modo == "sqlite":
+            return f"GROUP_CONCAT({coluna}, ', ')"
+        return f"GROUP_CONCAT({coluna} SEPARATOR ', ')"
+
+    def consulta_alunos_aptos(self, preco_minimo=90.00):
+        """Consulta 1: junção de 5 tabelas, filtrando exame Apto e mensalidade mínima."""
+        rows = self._executar_sql(
+            """SELECT a.nome_aluno, a.cpf, m.nome_modalidade, m.preco_mensal,
+                      i.nome_instrutor, i.cref, em.situacao, mm.data_adesao
+               FROM Alunos a
+               INNER JOIN MatriculasModalidades mm ON a.id_aluno = mm.id_aluno
+               INNER JOIN Modalidades m ON mm.id_modalidade = m.id_modalidade
+               INNER JOIN Instrutores i ON m.id_modalidade = i.id_modalidade
+               INNER JOIN ExamesMedicos em ON a.id_aluno = em.id_aluno
+               WHERE em.situacao = 'Apto'
+                 AND m.preco_mensal >= %s
+               ORDER BY a.nome_aluno ASC, m.nome_modalidade ASC;""",
+            (preco_minimo,), fetch=True,
+        )
+        return [
+            {"aluno": r[0], "cpf": r[1], "modalidade": r[2], "mensalidade": float(r[3]),
+             "instrutor": r[4], "cref": r[5], "situacao": r[6], "data_adesao": str(r[7])}
+            for r in rows
+        ]
+
+    def consulta_alunos_inaptos(self):
+        """Consulta 2: alunos matriculados com exame Inapto (junção de 5 tabelas)."""
+        rows = self._executar_sql(
+            """SELECT a.id_aluno, a.nome_aluno, em.situacao, em.data_avaliacao,
+                      m.nome_modalidade, i.nome_instrutor
+               FROM Alunos a
+               INNER JOIN ExamesMedicos em ON a.id_aluno = em.id_aluno
+               INNER JOIN MatriculasModalidades mm ON a.id_aluno = mm.id_aluno
+               INNER JOIN Modalidades m ON mm.id_modalidade = m.id_modalidade
+               INNER JOIN Instrutores i ON m.id_modalidade = i.id_modalidade
+               WHERE em.situacao = 'Inapto'
+               ORDER BY a.nome_aluno ASC;""",
+            fetch=True,
+        )
+        return [
+            {"id_aluno": int(r[0]), "aluno": r[1], "situacao": r[2], "data_avaliacao": str(r[3]),
+             "modalidade": r[4], "instrutor": r[5]}
+            for r in rows
+        ]
+
+    def consulta_receita_por_modalidade(self):
+        """Consulta 3: LEFT JOIN + GROUP BY + COUNT/SUM + HAVING (só modalidades com aluno)."""
+        rows = self._executar_sql(
+            """SELECT m.id_modalidade, m.nome_modalidade, i.nome_instrutor, m.preco_mensal,
+                      COUNT(mm.id_aluno) AS total_alunos,
+                      SUM(m.preco_mensal) AS receita_mensal
+               FROM Modalidades m
+               LEFT JOIN Instrutores i ON m.id_modalidade = i.id_modalidade
+               LEFT JOIN MatriculasModalidades mm ON m.id_modalidade = mm.id_modalidade
+               GROUP BY m.id_modalidade, m.nome_modalidade, i.nome_instrutor, m.preco_mensal
+               HAVING COUNT(mm.id_aluno) > 0
+               ORDER BY SUM(m.preco_mensal) DESC, m.nome_modalidade ASC;""",
+            fetch=True,
+        )
+        return [
+            {"id_modalidade": int(r[0]), "modalidade": r[1], "instrutor": r[2] or "-",
+             "preco_mensal": float(r[3]), "total_alunos": int(r[4]), "receita_mensal": float(r[5])}
+            for r in rows
+        ]
+
+    def consulta_alunos_multimodalidade(self):
+        """Consulta 4: alunos em mais de uma modalidade (GROUP BY + HAVING > 1)."""
+        rows = self._executar_sql(
+            f"""SELECT a.id_aluno, a.nome_aluno,
+                       COUNT(mm.id_modalidade) AS qtd_modalidades,
+                       {self._group_concat("m.nome_modalidade")} AS modalidades,
+                       SUM(m.preco_mensal) AS mensalidade_total
+                FROM Alunos a
+                INNER JOIN MatriculasModalidades mm ON a.id_aluno = mm.id_aluno
+                INNER JOIN Modalidades m ON mm.id_modalidade = m.id_modalidade
+                GROUP BY a.id_aluno, a.nome_aluno
+                HAVING COUNT(mm.id_modalidade) > 1
+                ORDER BY SUM(m.preco_mensal) DESC, a.nome_aluno ASC;""",
+            fetch=True,
+        )
+        return [
+            {"id_aluno": int(r[0]), "aluno": r[1], "qtd_modalidades": int(r[2]),
+             "modalidades": r[3], "mensalidade_total": float(r[4])}
+            for r in rows
+        ]
+
 
 class Controlador:
     def __init__(self):
@@ -571,6 +663,18 @@ class Controlador:
     def remover_exame(self, id_exame):
         return self.adaptador.excluir_exame(id_exame)
 
+    def relatorio_alunos_aptos(self, preco_minimo=90.00):
+        return self.adaptador.consulta_alunos_aptos(preco_minimo)
+
+    def relatorio_alunos_inaptos(self):
+        return self.adaptador.consulta_alunos_inaptos()
+
+    def relatorio_receita_por_modalidade(self):
+        return self.adaptador.consulta_receita_por_modalidade()
+
+    def relatorio_alunos_multimodalidade(self):
+        return self.adaptador.consulta_alunos_multimodalidade()
+
 
 class InteracaoUsuario:
     def __init__(self):
@@ -587,6 +691,7 @@ class InteracaoUsuario:
                     Choice("3 - Alunos", value="3"),
                     Choice("4 - Matrículas em Modalidades (N:N)", value="4"),
                     Choice("5 - Exames Médicos (1:1)", value="5"),
+                    Choice("6 - Consultas (seleções complexas)", value="6"),
                     Choice("0 - Sair", value="0"),
                 ],
                 qmark="",
@@ -602,6 +707,8 @@ class InteracaoUsuario:
                 self.menu_matriculas()
             elif opcao == "5":
                 self.menu_exames()
+            elif opcao == "6":
+                self.menu_consultas()
             elif opcao == "0" or opcao is None:
                 print("Encerrando o sistema...")
                 break
@@ -957,6 +1064,72 @@ class InteracaoUsuario:
                         print("Exame médico excluído com sucesso!")
             except Exception as e:
                 print(f"Erro: {e}")
+
+    @staticmethod
+    def _data_br(data):
+        # "2026-01-10" -> "10/01/2026"
+        partes = str(data)[:10].split("-")
+        return "/".join(reversed(partes)) if len(partes) == 3 else str(data)
+
+    def menu_consultas(self):
+        op = questionary.select(
+            "CONSULTAS (SELEÇÕES COMPLEXAS) - Escolha uma consulta:",
+            choices=[
+                Choice("1 - Ficha de alunos aptos (junção de 5 tabelas)", value="1"),
+                Choice("2 - Auditoria médica: alunos inaptos matriculados", value="2"),
+                Choice("3 - Receita e quantidade de alunos por modalidade", value="3"),
+                Choice("4 - Alunos em mais de uma modalidade", value="4"),
+                Choice("Voltar", value="0"),
+            ],
+            qmark="",
+        ).ask()
+
+        try:
+            if op == "1":
+                preco_str = questionary.text("Mensalidade mínima (R$):", default="90.00", qmark="").ask()
+                if preco_str is None:
+                    return
+                preco = float(preco_str.replace(",", ".") or 0)
+                linhas = self.controlador.relatorio_alunos_aptos(preco)
+                print(f"\n--- ALUNOS APTOS COM MENSALIDADE A PARTIR DE R$ {preco:.2f} ---")
+                for l in linhas:
+                    print(
+                        f"Aluno: {l['aluno']} | CPF: {l['cpf']} | Modalidade: {l['modalidade']} "
+                        f"| Mensalidade: R$ {l['mensalidade']:.2f} | Instrutor: {l['instrutor']} ({l['cref']}) "
+                        f"| Exame: {l['situacao']} | Adesão: {self._data_br(l['data_adesao'])}"
+                    )
+            elif op == "2":
+                linhas = self.controlador.relatorio_alunos_inaptos()
+                print("\n--- AUDITORIA MÉDICA: ALUNOS INAPTOS MATRICULADOS ---")
+                for l in linhas:
+                    print(
+                        f"ID: {l['id_aluno']} | Aluno: {l['aluno']} | Exame: {l['situacao']} "
+                        f"| Avaliação: {self._data_br(l['data_avaliacao'])} | Modalidade: {l['modalidade']} "
+                        f"| Instrutor a avisar: {l['instrutor']}"
+                    )
+            elif op == "3":
+                linhas = self.controlador.relatorio_receita_por_modalidade()
+                print("\n--- RECEITA MENSAL E ALUNOS POR MODALIDADE ---")
+                for l in linhas:
+                    print(
+                        f"Modalidade: {l['modalidade']} | Instrutor: {l['instrutor']} "
+                        f"| Valor: R$ {l['preco_mensal']:.2f} | Alunos: {l['total_alunos']} "
+                        f"| Receita mensal: R$ {l['receita_mensal']:.2f}"
+                    )
+            elif op == "4":
+                linhas = self.controlador.relatorio_alunos_multimodalidade()
+                print("\n--- ALUNOS EM MAIS DE UMA MODALIDADE ---")
+                for l in linhas:
+                    print(
+                        f"ID: {l['id_aluno']} | Aluno: {l['aluno']} | Qtd. modalidades: {l['qtd_modalidades']} "
+                        f"| Modalidades: {l['modalidades']} | Mensalidade total: R$ {l['mensalidade_total']:.2f}"
+                    )
+            else:
+                return
+            if not linhas:
+                print("Nenhum registro encontrado.")
+        except Exception as e:
+            print(f"Erro ao executar consulta: {e}")
 
 
 if __name__ == "__main__":
