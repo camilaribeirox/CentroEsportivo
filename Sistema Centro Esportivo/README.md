@@ -11,7 +11,7 @@ A documentação completa, com diagramas, está no [README principal](../README.
 
 Documentos do trabalho (na raiz do repositório):
 - [Relatório técnico](../Relat%C3%B3rio%20-%20Sistema%20Centro%20Esportivo.pdf)
-- [Slides da apresentação](../Slides%20Apresenta%C3%A7%C3%A3o.pdf)
+- [Slides da apresentação](../Apresenta%C3%A7%C3%A3o%20de%20slides.pdf)
 - [Diagramas](../diagramas)
 
 ## 🚀 Como Executar
